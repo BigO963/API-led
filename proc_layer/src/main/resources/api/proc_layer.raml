@@ -1,0 +1,113 @@
+#%RAML 1.0
+title: EXP_layer
+baseUri: localhost:8080/EXP
+description: Experience sluoksnio API, kuris yra atsakingas už klinetų duomenų valdymą (gavima bei sukurimą)
+
+types:
+  getCustomer:
+    type: object
+    properties:
+      CustomerId:
+        type: string
+      FirstName:
+        type: string
+      LastName: 
+        type: string
+      Email: 
+        type: string
+      PhoneNumber: 
+        type: string
+  postCustomer:
+    type: object
+    properties:
+      FirstName:
+        type: string
+      LastName: 
+        type: string
+      Email: 
+        type: string
+      PhoneNumber: 
+        type: string
+  getPurchase:
+    type: object
+    properties:
+      PurchaseId: string
+      Product: string
+      Price: string
+      Firm: string
+      CustomerId: string
+  postPurchase:
+    type: object
+    properties:
+      Product: string
+      Price: string
+      Firm: string
+      CustomerId: string
+  PurchaseRequest:
+    type: object
+    properties:
+      Purchase:
+        type: postPurchase
+      Customer:
+        type: postCustomer
+
+/purchases:
+  displayName: Gauti apsipirkimu duomenis
+  description: Is duomenu bazes paiima duomenis apie apsipirkimus
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            properties:
+            example:
+              {
+                  "Customer": 
+                  {
+                    "CustomerId": "2",
+                    "FirstName": "Name",
+                    "LastName": "LastName",
+                    "Email": "email@gmail.com",
+                    "PhoneNumber": "123456789"
+                  },
+                  
+                  "Product":
+                  {
+                    "PurchaseId": "1",
+                    "Product": "productName",
+                    "Price": "45.65",
+                    "Firm" : "Product firm",
+                    "CustomerId": "2"
+                  }
+                }
+      400:
+        body:
+          application/json:
+            properties:
+              message: string
+            example:
+              {
+                "message": "No data found :("
+              }
+  /create:
+    displayName: Ideti Apsipirkimo Duomenis
+    description: I duomenu baze ideti duomenis apie apsipirkima. Turi buti duotas produkto vardas, kaina, firma bei kliento id.
+    post:
+      body:
+        application/json:
+          type: PurchaseRequest
+      responses:
+        201:
+          body:
+            application/json:
+              type: PurchaseRequest
+
+        400:
+          body:
+            application/json:
+              properties:
+                message: string
+              example:
+                {
+                  "message": "Could not insert data :("
+                }

@@ -1,0 +1,93 @@
+#%RAML 1.0
+title: EXP_layer
+baseUri: localhost:8080/EXP
+description: Experience sluoksnio API, kuris yra atsakingas už klinetų duomenų valdymą (gavima bei sukurimą)
+
+types:
+  Customer:
+    type: object
+    properties:
+      FirstName:
+        type: string
+      LastName: 
+        type: string
+      Email: 
+        type: string
+      PhoneNumber: 
+        type: string
+
+/customers:
+  displayName: Gauti visus klientus
+  description: Gauti duomenis apie visus klientus.
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: array
+            items:
+              type: Customer
+      400:
+        body:
+          application/json:
+            properties:
+              message: string
+            example:
+              {
+                "message": "No data found"
+              }
+
+  /{customerId}:
+    displayName: Gauti klientą
+    description: Gauti duomenis apie specifinį klinetą pagal jo ID.
+    uriParameters:
+      customerId:
+        type: string
+        required: true
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: Customer
+        400:
+          body:
+            application/json:
+              properties:
+                message: string
+              example:
+                {
+                  "message": "Client does not exsist"
+                }
+  /create:
+    displayName: Sukurti klientą
+    description: Sukurti klientą pagal duotus query parametrus.
+    post:
+      body:
+        application/json:
+          type: Customer
+          description: Siunciama Customer tipo duomenis 
+      responses:
+        201:
+          body:
+            application/json:
+              type: Customer
+              properties:
+                message: string
+              example:
+                {
+                  "FirstName": "Name",
+                  "LastName": "LastName",
+                  "Email": "email@gmail.com",
+                  "PhoneNumber": "123456789",
+                  "message": "Client created  sucessfully"
+                }
+        400:
+          body:
+            application/json:
+              properties:
+                message: string
+              example:
+                {
+                  "message": "There was an error"
+                }

@@ -1,0 +1,157 @@
+#%RAML 1.0
+title: SYS_layer
+description: APi, kuris paima duomenis is duomenu bazes arba jous ideda. Funkcionalumas priklauso nuo endpointu, kokius duomenis paiimti - nuo URI parametru.
+baseUri: localhost:8081/SYS
+
+types:
+  Customer:
+    type: object
+    properties:
+      CustomerId:
+        type: string
+        required: false
+      FirstName:
+        type: string
+      LastName: 
+        type: string
+      Email: 
+        type: string
+      PhoneNumber: 
+        type: string
+  Purchase:
+    type: object
+    properties:
+      Product: string
+      Price: string
+      Firm: string
+      CustomerId: string
+  PurchaseRequest:
+    type: object
+    properties:
+      Purchase:
+        type: Purchase
+      Customer:
+        type: postCustomer
+  postCustomer:
+    type: object
+    properties:
+      FirstName:
+        type: string
+      LastName: 
+        type: string
+      Email: 
+        type: string
+      PhoneNumber: 
+        type: string
+      
+/customers:
+  displayName: Gauti klientu duomenis
+  description: Is duomenu bazes paiima duomenis apie klientus
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: array
+            items:
+              type: Customer
+      400:
+        body:
+          application/json:
+            properties:
+              message: string
+            example:
+              {
+                "message": "No data found :("
+              }
+              
+                    
+  /{customerId}:
+    displayName: Gauti specifinio kliento duomenis
+    description: Gauti kliento duomenis pagal jo id.
+    uriParameters:
+      customerId:
+        type: string
+        required: true
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: Customer
+        400:
+          body:
+            application/json:
+              properties:
+                message: string
+              example:
+                {
+                  "message": "Customer not found"
+                }      
+
+
+  /create:
+    displayName: Ideti Kliento Duomenis
+    description: I duomenu baze ideti duomenis apie klienta. Turi buti duotas kliento vardas, pavarde, elektroninis pastas bei telefono numeris. Sie duomenis duodami per QUERY parametrus.
+    post:
+      body:
+        application/json:
+          type: Customer
+      responses:
+        201:
+          body:
+            application/json:
+              type: Customer
+                   
+        400:
+          body:
+            application/json:
+              properties:
+                message: string
+              example:
+                {
+                  "message": "Could not insert data :("
+                }
+/purchases:
+  displayName: Gauti apsipirkimu duomenis
+  description: Is duomenu bazes paiima duomenis apie apsipirkimus
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+            type: array
+            items:
+              type: Purchase
+      400:
+        body:
+          application/json:
+            properties:
+              message: string
+            example:
+              {
+                "message": "No data found :("
+              }
+  /create:
+    displayName: Ideti Apsipirkimo Duomenis
+    description: I duomenu baze ideti duomenis apie apsipirkima. Turi buti duotas produkto vardas, kaina, firma bei kliento id.
+    post:
+      body:
+        application/json:
+          type: Purchase
+      responses:
+        201:
+          body:
+            application/json:
+              type: Purchase
+                   
+        400:
+          body:
+            application/json:
+              properties:
+                message: string
+              example:
+                {
+                  "message": "Could not insert data :("
+                }
+          

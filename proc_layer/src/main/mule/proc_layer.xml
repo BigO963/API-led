@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <http:listener-config name="proc_layer-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8082" />
+    </http:listener-config>
+    <apikit:config name="proc_layer-config" api="proc_layer.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="1494613c-a5fe-42b7-80ef-1d551b396af1">
+        <http:request-connection host="localhost" port="8081" />
+    </http:request-config>
+    <flow name="proc_layer-main">
+        <http:listener config-ref="proc_layer-httpListenerConfig" path="/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="proc_layer-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="proc_layer-console">
+        <http:listener config-ref="proc_layer-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="proc_layer-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\Klientai\(CustomerFirstName)\(CustomerLastName):proc_layer-config">
+        <set-variable value="#[attributes.uriParams.CustomerFirstName]" doc:name="URI1" doc:id="7c7f4257-600d-405a-9545-b79f5a15e77d" variableName="URI1" />
+        <set-variable value="#[attributes.uriParams.CustomerLastName]" doc:name="URI2" doc:id="6a4f7ec8-98b6-43c8-ad62-3bad10035f58" variableName="URI2" />
+        <set-variable value="#[{'CustomerFirstName': vars.URI1, 'CustomerLastName': vars.URI2}]" doc:name="Mapped URIS" doc:id="a6f20f03-377e-450b-aca5-c45224da1000" variableName="URImap" />
+        <http:request method="GET" doc:name="Request" doc:id="7761e896-96f4-4cfd-81dd-5648f21499e9" config-ref="HTTP_Request_configuration" path="/GautiKlientoDuomenis/{CustomerFirstName}/{CustomerLastName}">
+            <http:uri-params><![CDATA[#[vars.URImap]]]></http:uri-params>
+        </http:request>
+        <ee:transform doc:name="Transform Message" doc:id="3a0117b1-a8c1-4949-82f5-6f7cbf368133">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var product = "Klaviatura"
+var price = "78.65"
+---
+payload map ((item) -> 
+  {
+    CustomerData: {
+      FirstName: item.FirstName,
+      LastName: item.LastName,
+      Email: item.Email,
+      Phone: item.Phone
+    },
+    PurchaseData: {
+      Product: product,
+      Price: price
+    }
+  }
+)]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger level="INFO" message="&quot;Received CustomerFirstName: #[vars.URI1], CustomerLastName: #[vars.URI2]&quot;" />
+    </flow>
+    <flow name="post:\IdetiKlientus:proc_layer-config">
+        <set-variable value="attributes.queryParams.FirstName" doc:name="First Name" doc:id="f51b63ef-be2e-41f0-b19a-ae24eb7d5987" variableName="FirstName" />
+        <set-variable value="attributes.queryParams.PhoneNumber" doc:name="Phone Number" doc:id="c2f756ed-4dd4-4952-869b-477a8a2b9075" variableName="PhoneNumber" />
+        <set-variable value="attributes.queryParams.LastName" doc:name="Last Name" doc:id="3db0156e-9a7a-42b0-9f7a-a11a3728e1ca" variableName="LastName" />
+        <set-variable value="attributes.queryParams.Email" doc:name="Email" doc:id="47d429d8-14d0-48bd-a13d-0ff49237c64e" variableName="Email" />
+        <set-variable value="#[{'CustomerFirstName': vars.FirstName, 'CustomerLastName': vars.LastName, 'CustomerEmail': vars.Email, 'CustomerPhoneNumber': vars.PhoneNumber}]" doc:name="Query parameters" doc:id="7ba1d3cb-46a3-4e2c-be9d-a364d98f7888" variableName="queryMap" />
+        <http:request method="POST" doc:name="Request" doc:id="6c496df9-d88b-4893-909e-8682dfc2b2d2" config-ref="HTTP_Request_configuration" path="/IdetiKlientoDuomenis">
+            <http:query-params><![CDATA[#[vars.queryMap]]]></http:query-params>
+        </http:request>
+    </flow>
+    <flow name="get:\purchases:proc_layer-config">
+        <http:request method="GET" doc:name="Request" doc:id="4a1516da-33bf-4ec1-83b5-f034d02dd742" config-ref="HTTP_Request_configuration" path="/purchases" />
+        <ee:transform doc:name="Transform Message" doc:id="625234d7-c8b4-4e6c-b28e-40fa5ee74d37">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <set-variable value="#[payload]" doc:name="Purchase payload" doc:id="e7255d71-d3ff-44c1-90e9-ba3ebfb29dc4" variableName="purchasePayload" />
+        <http:request method="GET" doc:name="Request" doc:id="efb79244-5221-4407-93fe-c584c9a87cd4" config-ref="HTTP_Request_configuration" path="/customers" />
+        <ee:transform doc:name="Transform Message" doc:id="c5cc4d27-4060-4e23-ad2f-bc28422d8dce">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <set-variable value="#[payload]" doc:name="Customers payload" doc:id="2bc92e0a-fdef-444f-94bc-8592d17f94d2" variableName="customersPayload" />
+        <ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	 CustomersWithPurchases: vars.customersPayload map (customer) -> {
+        Customer: customer,
+        Purchases: vars.purchasePayload filter (purchase) -> 
+            (purchase.CustomerId? and customer.CustomerId?) and 
+            (purchase.CustomerId as String == customer.CustomerId as String)
+            
+            }
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger level="INFO" doc:name="Logger" doc:id="63051f66-ec39-4a2a-baac-56fe347fdc38" message="#[&quot;Purchase Payload: #[vars.purchasePayload]&quot;]" />
+        <logger level="INFO" doc:name="Logger" doc:id="6225b809-e301-447c-8ba8-bca8416736ce" message="#[&quot;Custiner payload: #[vars.customersPayload]&quot;]" />
+    </flow>
+    <flow name="post:\purchases\create:application\json:proc_layer-config">
+        <set-variable value="#[payload.Customer]" doc:name="Customer Payload" doc:id="7c3bbb58-77d7-40d7-9c12-e58ad9f01e03" variableName="customerPayload"/>
+		<set-variable value="#[payload.Purchase]" doc:name="Purchase Payload" doc:id="8051a8d0-1a91-4252-9bc7-fdac4d437020" variableName="purchasePayload"/>
+        <http:request method="POST" doc:name="Request" doc:id="a5633590-389a-48c1-b900-2a4db87de4d7" config-ref="HTTP_Request_configuration" path="/customers/create" >
+			<http:body ><![CDATA[#[vars.customerPayload]]]></http:body>
+		</http:request>
+        <http:request method="POST" doc:name="Request" doc:id="17dc5a98-5a53-4541-841f-62329fe6bc2c" config-ref="HTTP_Request_configuration" path="/purchases/create">
+			<http:body><![CDATA[#[vars.purchasePayload]]]></http:body>
+		</http:request>
+		<ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Data inserted sucessfully!"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>

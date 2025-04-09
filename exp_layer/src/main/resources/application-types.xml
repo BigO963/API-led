@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="Customer_data" format="json">
+      <types:shape format="weave" example="examples/CustomerData.json"><![CDATA[%dw 2.0
+
+type Customer_data = {|
+  FirstName: String, 
+  LastName: String, 
+  Email: String, 
+  PhoneNumber: String
+|} {"example": "{\\\"FirstName\\\":\\\"12\\\",\\\"LastName\\\":\\\"aaa\\\",\\\"Email\\\":\\\"A\\\",\\\"PhoneNumber\\\":\\\"123\\\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+</types:mule>
